@@ -43,7 +43,7 @@ namespace ItemStats
             //Disabled because it looks terrible, and Ping Details does this more elegantly.
             //previewDesc = Config.Bind("Settings", "Show Preview", false, "Show short item description in the interaction tooltip. Warning: causes text to become small.").Value;
 
-            pingDetails = Config.Bind("Settings", "Ping Details", true, "Prints a short item description to chat when pinged. Only shows up for the player that pinged the item.").Value;
+            pingDetails = Config.Bind("Settings", "Ping Details", true, "Prints a short item description to chat when pinging items. Only shows up for the player that pinged the item.").Value;
             pingDetailsVerbose = Config.Bind("Settings", "Ping Details - Show Full Description", false, "Pings Details shows the full item description.").Value;
         }
 
