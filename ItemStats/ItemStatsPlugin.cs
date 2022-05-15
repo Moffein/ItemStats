@@ -17,10 +17,11 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.1.3")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.2.0")]
     public class ItemStats : BaseUnityPlugin
     {
-        public static List<ItemDef> IgnoredItems = new List<ItemDef>{};
+        public static List<ItemDef> IgnoredItems = new List<ItemDef> { };
+        public static List<EquipmentDef> IgnoredEquipment = new List<EquipmentDef> { };
 
         public static bool pingDetails = true;
         public static bool pingDetailsVerbose = false;
@@ -35,9 +36,16 @@ namespace ItemStats
         public void Awake()
         {
             ReadConfig();
-            if (detailedHover) On.RoR2.UI.ItemIcon.SetItemIndex += ItemIcon_SetItemIndex;
-            if (detailedPickup) On.RoR2.UI.GenericNotification.SetItem += GenericNotification_SetItem;
-            //if (previewDesc) On.RoR2.GenericPickupController.GetContextString += GenericPickupController_GetContextString;
+            if (detailedHover)
+            {
+                On.RoR2.UI.ItemIcon.SetItemIndex += ItemIcon_SetItemIndex;
+                On.RoR2.UI.EquipmentIcon.Update += EquipmentIcon_Update;    //Find something more efficient to hook
+            }
+            if (detailedPickup)
+            {
+                On.RoR2.UI.GenericNotification.SetItem += GenericNotification_SetItem;
+                On.RoR2.UI.GenericNotification.SetEquipment += GenericNotification_SetEquipment;
+            }
             if (pingDetails) On.RoR2.PingerController.SetCurrentPing += PingerController_SetCurrentPing;
         }
 
@@ -45,9 +53,6 @@ namespace ItemStats
         {
             detailedHover = Config.Bind("Settings", "Detailed Hover", true, "Show full item description when hovering over the item icon.").Value;
             detailedPickup = Config.Bind("Settings", "Detailed Pickup", true, "Show full item description when picking up the item.").Value;
-
-            //Disabled because it looks terrible, and Ping Details does this more elegantly.
-            //previewDesc = Config.Bind("Settings", "Show Preview", false, "Show short item description in the interaction tooltip. Warning: causes text to become small.").Value;
 
             pingDetails = Config.Bind("Settings", "Ping Details", true, "Pinging an item shows its description.").Value;
             pingNotif = Config.Bind("Settings", "Ping Details - Show as Notification", true, "Item description shows as a notification on the HUD.").Value;
@@ -74,7 +79,7 @@ namespace ItemStats
                     else
                     {
                         ShopTerminalBehavior stb = newPingInfo.targetGameObject.GetComponent<ShopTerminalBehavior>();
-                        if (stb)
+                        if (stb && !stb.pickupIndexIsHidden)
                         {
                             pd = PickupCatalog.GetPickupDef(stb.pickupIndex);
                         }
@@ -102,25 +107,33 @@ namespace ItemStats
                                 }
                             }
                         }
+                        else
+                        {
+                            EquipmentDef ed = EquipmentCatalog.GetEquipmentDef(pd.equipmentIndex);
+                            if (ed)
+                            {
+                                if (pingChat)
+                                {
+                                    Chat.AddMessage(new SimpleChatMessage
+                                    {
+                                        baseToken = (pingDetailsVerbose && !IgnoredEquipment.Contains(ed)) ? ed.descriptionToken : ed.pickupToken
+                                    });
+                                }
+
+                                if (pingNotif)
+                                {
+                                    CharacterMaster cm = self.gameObject.GetComponent<CharacterMaster>();
+                                    if (cm)
+                                    {
+                                        CharacterMasterNotificationQueue.PushEquipmentNotification(cm, ed.equipmentIndex);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-
-        /*public static string GenericPickupController_GetContextString(On.RoR2.GenericPickupController.orig_GetContextString orig, GenericPickupController self, Interactor activator)
-        {
-            string toReturn = orig(self, activator);
-            PickupDef pd = PickupCatalog.GetPickupDef(self.pickupIndex);
-            if (pd != null)
-            {
-                ItemDef id = ItemCatalog.GetItemDef(pd.itemIndex);
-                if (id)
-                {
-                    toReturn += "\n" + Language.GetString(id.pickupToken);
-                }
-            }
-            return toReturn;
-        }*/
 
         public static void GenericNotification_SetItem(On.RoR2.UI.GenericNotification.orig_SetItem orig, GenericNotification self, ItemDef itemDef)
         {
@@ -128,6 +141,15 @@ namespace ItemStats
             if (!IgnoredItems.Contains(itemDef))
             {
                 self.descriptionText.token = itemDef.descriptionToken;
+            }
+        }
+
+        private void GenericNotification_SetEquipment(On.RoR2.UI.GenericNotification.orig_SetEquipment orig, GenericNotification self, EquipmentDef equipmentDef)
+        {
+            orig(self, equipmentDef);
+            if (!IgnoredEquipment.Contains(equipmentDef))
+            {
+                self.descriptionText.token = equipmentDef.descriptionToken;
             }
         }
 
@@ -140,6 +162,22 @@ namespace ItemStats
                 if (!IgnoredItems.Contains(id))
                 {
                     self.tooltipProvider.overrideBodyText = Language.GetString(id.descriptionToken);
+                }
+            }
+        }
+
+        private void EquipmentIcon_Update(On.RoR2.UI.EquipmentIcon.orig_Update orig, EquipmentIcon self)
+        {
+            orig(self);
+            if (self.hasEquipment && self.tooltipProvider)
+            {
+                if (self.targetEquipmentSlot)
+                {
+                    EquipmentDef ed = EquipmentCatalog.GetEquipmentDef(self.targetEquipmentSlot.equipmentIndex);
+                    if (ed && !IgnoredEquipment.Contains(ed))
+                    {
+                        self.tooltipProvider.overrideBodyText = Language.GetString(ed.descriptionToken);
+                    }
                 }
             }
         }
