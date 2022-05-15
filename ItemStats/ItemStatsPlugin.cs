@@ -17,9 +17,11 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.1.0")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.1.2")]
     public class ItemStats : BaseUnityPlugin
     {
+        public static List<ItemDef> IgnoredItems = new List<ItemDef>{};
+
         public static bool pingDetails = true;
         public static bool pingDetailsVerbose = false;
 
@@ -123,7 +125,10 @@ namespace ItemStats
         public static void GenericNotification_SetItem(On.RoR2.UI.GenericNotification.orig_SetItem orig, GenericNotification self, ItemDef itemDef)
         {
             orig(self, itemDef);
-            self.descriptionText.token = itemDef.descriptionToken;
+            if (!IgnoredItems.Contains(itemDef))
+            {
+                self.descriptionText.token = itemDef.descriptionToken;
+            }
         }
 
         public static void ItemIcon_SetItemIndex(On.RoR2.UI.ItemIcon.orig_SetItemIndex orig, ItemIcon self, ItemIndex newItemIndex, int newItemCount)
@@ -132,7 +137,10 @@ namespace ItemStats
             ItemDef id = ItemCatalog.GetItemDef(newItemIndex);
             if (id && self.tooltipProvider)
             {
-                self.tooltipProvider.overrideBodyText = Language.GetString(id.descriptionToken);
+                if (!IgnoredItems.Contains(id))
+                {
+                    self.tooltipProvider.overrideBodyText = Language.GetString(id.descriptionToken);
+                }
             }
         }
     }
