@@ -17,7 +17,7 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.1.2")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.1.3")]
     public class ItemStats : BaseUnityPlugin
     {
         public static List<ItemDef> IgnoredItems = new List<ItemDef>{};
@@ -89,7 +89,7 @@ namespace ItemStats
                             {
                                 Chat.AddMessage(new SimpleChatMessage
                                 {
-                                    baseToken = pingDetailsVerbose ? id.descriptionToken : id.pickupToken
+                                    baseToken = (pingDetailsVerbose && !IgnoredItems.Contains(id)) ? id.descriptionToken : id.pickupToken
                                 });
                             }
 
