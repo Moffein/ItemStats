@@ -17,7 +17,7 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.2.0")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.2.1")]
     public class ItemStats : BaseUnityPlugin
     {
         public static List<ItemDef> IgnoredItems = new List<ItemDef> { };
@@ -140,7 +140,14 @@ namespace ItemStats
             orig(self, itemDef);
             if (!IgnoredItems.Contains(itemDef))
             {
-                self.descriptionText.token = itemDef.descriptionToken;
+                if (!Language.IsTokenInvalid(itemDef.descriptionToken))
+                {
+                    self.descriptionText.token = itemDef.descriptionToken;
+                }
+                else
+                {
+                    self.descriptionText.token = itemDef.pickupToken;
+                }
             }
         }
 
@@ -149,7 +156,14 @@ namespace ItemStats
             orig(self, equipmentDef);
             if (!IgnoredEquipment.Contains(equipmentDef))
             {
-                self.descriptionText.token = equipmentDef.descriptionToken;
+                if (!Language.IsTokenInvalid(equipmentDef.descriptionToken))
+                {
+                    self.descriptionText.token = equipmentDef.descriptionToken;
+                }
+                else
+                {
+                    self.descriptionText.token = equipmentDef.pickupToken;
+                }
             }
         }
 
@@ -161,7 +175,14 @@ namespace ItemStats
             {
                 if (!IgnoredItems.Contains(id))
                 {
-                    self.tooltipProvider.overrideBodyText = Language.GetString(id.descriptionToken);
+                    if (!Language.IsTokenInvalid(id.descriptionToken))
+                    {
+                        self.tooltipProvider.overrideBodyText = Language.GetString(id.descriptionToken);
+                    }
+                    else
+                    {
+                        self.tooltipProvider.overrideBodyText = id.pickupToken;
+                    }
                 }
             }
         }
@@ -176,7 +197,14 @@ namespace ItemStats
                     EquipmentDef ed = EquipmentCatalog.GetEquipmentDef(self.targetEquipmentSlot.equipmentIndex);
                     if (ed && !IgnoredEquipment.Contains(ed))
                     {
-                        self.tooltipProvider.overrideBodyText = Language.GetString(ed.descriptionToken);
+                        if (!Language.IsTokenInvalid(ed.descriptionToken))
+                        {
+                            self.tooltipProvider.overrideBodyText = Language.GetString(ed.descriptionToken);
+                        }
+                        else
+                        {
+                            self.tooltipProvider.overrideBodyText = Language.GetString(ed.pickupToken);
+                        }
                     }
                 }
             }
