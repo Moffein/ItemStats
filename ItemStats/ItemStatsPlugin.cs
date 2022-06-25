@@ -17,7 +17,7 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.2.1")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.2.2")]
     public class ItemStats : BaseUnityPlugin
     {
         public static List<ItemDef> IgnoredItems = new List<ItemDef> { };
@@ -79,7 +79,7 @@ namespace ItemStats
                     else
                     {
                         ShopTerminalBehavior stb = newPingInfo.targetGameObject.GetComponent<ShopTerminalBehavior>();
-                        if (stb && !stb.pickupIndexIsHidden)
+                        if (stb && !stb.pickupIndexIsHidden && !stb.Networkhidden && stb.pickupDisplay)
                         {
                             pd = PickupCatalog.GetPickupDef(stb.pickupIndex);
                         }
