@@ -17,7 +17,7 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.2.2")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.0")]
     public class ItemStats : BaseUnityPlugin
     {
         public static List<ItemDef> IgnoredItems = new List<ItemDef> { };
@@ -25,9 +25,11 @@ namespace ItemStats
 
         public static bool pingDetails = true;
         public static bool pingDetailsVerbose = false;
+        public static float pingDetailsDuration = 2f;
 
         public static bool pingNotif = true;
         public static bool pingChat = false;
+
 
         //public static bool previewDesc = false;
         public static bool detailedHover = true;
@@ -54,6 +56,7 @@ namespace ItemStats
             detailedHover = Config.Bind("Settings", "Detailed Hover", true, "Show full item description when hovering over the item icon.").Value;
             detailedPickup = Config.Bind("Settings", "Detailed Pickup", true, "Show full item description when picking up the item.").Value;
 
+            pingDetailsDuration = Config.Bind("Settings", "Ping Details - Notification Duration", 2f, "How long the item notification lasts for.").Value;
             pingDetails = Config.Bind("Settings", "Ping Details", true, "Pinging an item shows its description.").Value;
             pingNotif = Config.Bind("Settings", "Ping Details - Show as Notification", true, "Item description shows as a notification on the HUD.").Value;
             pingChat = Config.Bind("Settings", "Ping Details - Show as Chat Message", false, "Item description shows as a chat message.").Value;
@@ -103,7 +106,7 @@ namespace ItemStats
                                 CharacterMaster cm = self.gameObject.GetComponent<CharacterMaster>();
                                 if (cm)
                                 {
-                                    CharacterMasterNotificationQueue.PushItemNotification(cm, id.itemIndex);
+                                    PushItemNotificationDuration(cm, id.itemIndex, pingDetailsDuration);
                                 }
                             }
                         }
@@ -125,7 +128,7 @@ namespace ItemStats
                                     CharacterMaster cm = self.gameObject.GetComponent<CharacterMaster>();
                                     if (cm)
                                     {
-                                        CharacterMasterNotificationQueue.PushEquipmentNotification(cm, ed.equipmentIndex);
+                                        PushEquipmentNotificationDuration(cm, ed.equipmentIndex, pingDetailsDuration);
                                     }
                                 }
                             }
@@ -207,6 +210,39 @@ namespace ItemStats
                         }
                     }
                 }
+            }
+        }
+
+        public static void PushItemNotificationDuration(CharacterMaster characterMaster, ItemIndex itemIndex, float duration)
+        {
+            if (!characterMaster.hasAuthority)
+            {
+                Debug.LogError("Can't PushItemNotification for " + Util.GetBestMasterName(characterMaster) + " because they aren't local.");
+                return;
+            }
+            CharacterMasterNotificationQueue notificationQueueForMaster = CharacterMasterNotificationQueue.GetNotificationQueueForMaster(characterMaster);
+            if (notificationQueueForMaster && itemIndex != ItemIndex.None)
+            {
+                ItemDef itemDef = ItemCatalog.GetItemDef(itemIndex);
+                if (itemDef == null || itemDef.hidden)
+                {
+                    return;
+                }
+                notificationQueueForMaster.PushNotification(new CharacterMasterNotificationQueue.NotificationInfo(ItemCatalog.GetItemDef(itemIndex), null), duration);
+            }
+        }
+
+        public static void PushEquipmentNotificationDuration(CharacterMaster characterMaster, EquipmentIndex equipmentIndex, float duration)
+        {
+            if (!characterMaster.hasAuthority)
+            {
+                Debug.LogError("Can't PushEquipmentNotification for " + Util.GetBestMasterName(characterMaster) + " because they aren't local.");
+                return;
+            }
+            CharacterMasterNotificationQueue notificationQueueForMaster = CharacterMasterNotificationQueue.GetNotificationQueueForMaster(characterMaster);
+            if (notificationQueueForMaster && equipmentIndex != EquipmentIndex.None)
+            {
+                notificationQueueForMaster.PushNotification(new CharacterMasterNotificationQueue.NotificationInfo(EquipmentCatalog.GetEquipmentDef(equipmentIndex), null), duration);
             }
         }
     }
