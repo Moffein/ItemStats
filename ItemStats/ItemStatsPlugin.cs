@@ -17,7 +17,7 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.1")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.2")]
     public class ItemStats : BaseUnityPlugin
     {
         public static List<ItemDef> IgnoredItems = new List<ItemDef> { };
@@ -56,7 +56,7 @@ namespace ItemStats
             detailedHover = Config.Bind("Settings", "Detailed Hover", true, "Show full item description when hovering over the item icon.").Value;
             detailedPickup = Config.Bind("Settings", "Detailed Pickup", true, "Show full item description when picking up the item.").Value;
 
-            pingDetailsDuration = Config.Bind("Settings", "Ping Details - Notification Duration", 3f, "How long the item notification lasts for.").Value;
+            pingDetailsDuration = Config.Bind("Settings", "Ping Details - Notification Duration", 4f, "How long the item notification lasts for.").Value;
             pingDetails = Config.Bind("Settings", "Ping Details", true, "Pinging an item shows its description.").Value;
             pingNotif = Config.Bind("Settings", "Ping Details - Show as Notification", true, "Item description shows as a notification on the HUD.").Value;
             pingChat = Config.Bind("Settings", "Ping Details - Show as Chat Message", false, "Item description shows as a chat message.").Value;
