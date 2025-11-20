@@ -17,7 +17,7 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.2")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.3")]
     public class ItemStats : BaseUnityPlugin
     {
         public static List<ItemDef> IgnoredItems = new List<ItemDef> { };
@@ -40,7 +40,7 @@ namespace ItemStats
             ReadConfig();
             if (detailedHover)
             {
-                On.RoR2.UI.ItemIcon.SetItemIndex += ItemIcon_SetItemIndex;
+                On.RoR2.UI.ItemIcon.SetItemIndex_ItemIndex_int_float += ItemIcon_SetItemIndex;
                 On.RoR2.UI.EquipmentIcon.Update += EquipmentIcon_Update;    //Find something more efficient to hook
             }
             if (detailedPickup)
@@ -84,7 +84,11 @@ namespace ItemStats
                         ShopTerminalBehavior stb = newPingInfo.targetGameObject.GetComponent<ShopTerminalBehavior>();
                         if (stb && !stb.pickupIndexIsHidden && !stb.Networkhidden && stb.pickupDisplay)
                         {
-                            pd = PickupCatalog.GetPickupDef(stb.pickupIndex);
+                            UniquePickup pickup = stb.CurrentPickup();
+                            if (pickup != null && pickup.pickupIndex != PickupIndex.none)
+                            {
+                                pd = PickupCatalog.GetPickupDef(pickup.pickupIndex);
+                            }
                         }
                     }
 
@@ -170,9 +174,9 @@ namespace ItemStats
             }
         }
 
-        public static void ItemIcon_SetItemIndex(On.RoR2.UI.ItemIcon.orig_SetItemIndex orig, ItemIcon self, ItemIndex newItemIndex, int newItemCount)
+        public static void ItemIcon_SetItemIndex(On.RoR2.UI.ItemIcon.orig_SetItemIndex_ItemIndex_int_float orig, ItemIcon self, ItemIndex newItemIndex, int newItemCount, float duration)
         {
-            orig(self, newItemIndex, newItemCount);
+            orig(self, newItemIndex, newItemCount, duration);
             ItemDef id = ItemCatalog.GetItemDef(newItemIndex);
             if (id && self.tooltipProvider)
             {
