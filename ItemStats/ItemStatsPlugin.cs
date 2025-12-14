@@ -17,7 +17,7 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.3")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.4")]
     public class ItemStats : BaseUnityPlugin
     {
         public static List<ItemDef> IgnoredItems = new List<ItemDef> { };
@@ -188,7 +188,7 @@ namespace ItemStats
                     }
                     else
                     {
-                        self.tooltipProvider.overrideBodyText = id.pickupToken;
+                        self.tooltipProvider.overrideBodyText = Language.GetString(id.pickupToken);
                     }
                 }
             }
