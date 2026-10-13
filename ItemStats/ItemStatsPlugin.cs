@@ -17,7 +17,7 @@ namespace R2API.Utils
 //Based off of https://github.com/ontrigger/ItemStatsMod
 namespace ItemStats
 {
-    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.4")]
+    [BepInPlugin("com.Moffein.ItemStats", "ItemStats", "1.3.5")]
     public class ItemStats : BaseUnityPlugin
     {
         public static List<ItemDef> IgnoredItems = new List<ItemDef> { };
@@ -40,8 +40,8 @@ namespace ItemStats
             ReadConfig();
             if (detailedHover)
             {
-                On.RoR2.UI.ItemIcon.SetItemIndex_ItemIndex_int_float += ItemIcon_SetItemIndex;
-                On.RoR2.UI.EquipmentIcon.Update += EquipmentIcon_Update;    //Find something more efficient to hook
+                On.RoR2.UI.ItemIcon.SetItemIndex_SetItemIndexArgs += ItemIcon_SetItemIndex_SetItemIndexArgs;
+                On.RoR2.UI.EquipmentIcon.LateUpdate += EquipmentIcon_LateUpdate;
             }
             if (detailedPickup)
             {
@@ -49,6 +49,29 @@ namespace ItemStats
                 On.RoR2.UI.GenericNotification.SetEquipment += GenericNotification_SetEquipment;
             }
             if (pingDetails) On.RoR2.PingerController.SetCurrentPing += PingerController_SetCurrentPing;
+        }
+
+        private void EquipmentIcon_LateUpdate(On.RoR2.UI.EquipmentIcon.orig_LateUpdate orig, EquipmentIcon self)
+        {
+            orig(self);
+            if (self.hasEquipment && self.tooltipProvider)
+            {
+                if (self.targetEquipmentSlot)
+                {
+                    EquipmentDef ed = EquipmentCatalog.GetEquipmentDef(self.targetEquipmentSlot.equipmentIndex);
+                    if (ed && !IgnoredEquipment.Contains(ed))
+                    {
+                        if (!Language.IsTokenInvalid(ed.descriptionToken))
+                        {
+                            self.tooltipProvider.overrideBodyText = Language.GetString(ed.descriptionToken);
+                        }
+                        else
+                        {
+                            self.tooltipProvider.overrideBodyText = Language.GetString(ed.pickupToken);
+                        }
+                    }
+                }
+            }
         }
 
         public void ReadConfig()
@@ -174,10 +197,13 @@ namespace ItemStats
             }
         }
 
-        public static void ItemIcon_SetItemIndex(On.RoR2.UI.ItemIcon.orig_SetItemIndex_ItemIndex_int_float orig, ItemIcon self, ItemIndex newItemIndex, int newItemCount, float duration)
+
+
+        private void ItemIcon_SetItemIndex_SetItemIndexArgs(On.RoR2.UI.ItemIcon.orig_SetItemIndex_SetItemIndexArgs orig, ItemIcon self, ItemIcon.SetItemIndexArgs args)
         {
-            orig(self, newItemIndex, newItemCount, duration);
-            ItemDef id = ItemCatalog.GetItemDef(newItemIndex);
+            orig(self, args);
+
+            ItemDef id = ItemCatalog.GetItemDef(args.newItemIndex);
             if (id && self.tooltipProvider)
             {
                 if (!IgnoredItems.Contains(id))
@@ -189,29 +215,6 @@ namespace ItemStats
                     else
                     {
                         self.tooltipProvider.overrideBodyText = Language.GetString(id.pickupToken);
-                    }
-                }
-            }
-        }
-
-        private void EquipmentIcon_Update(On.RoR2.UI.EquipmentIcon.orig_Update orig, EquipmentIcon self)
-        {
-            orig(self);
-            if (self.hasEquipment && self.tooltipProvider)
-            {
-                if (self.targetEquipmentSlot)
-                {
-                    EquipmentDef ed = EquipmentCatalog.GetEquipmentDef(self.targetEquipmentSlot.equipmentIndex);
-                    if (ed && !IgnoredEquipment.Contains(ed))
-                    {
-                        if (!Language.IsTokenInvalid(ed.descriptionToken))
-                        {
-                            self.tooltipProvider.overrideBodyText = Language.GetString(ed.descriptionToken);
-                        }
-                        else
-                        {
-                            self.tooltipProvider.overrideBodyText = Language.GetString(ed.pickupToken);
-                        }
                     }
                 }
             }
